@@ -1,0 +1,4 @@
+16/04/2018
+
+	- Test inbterface with NTY methods
+	- Implement multi-valued version

@@ -1,0 +1,26 @@
+16/04/2018
+
+	- Create repository
+	- Add small benchmarks
+		- double_inhibition.lp: 2 variables
+		- repressilator.lp: 3 variables
+		- repressilator_AS.lp: 3 variables (special version for change only asynchronous)
+		- mammalian.lp: 10 variables
+	
+	- Rule class
+	- Rule extraction from text file (LFIT OUTPUT syntaxe)
+	- All transitions generation
+	- Fixed number of random transions generation
+	- Output transitions to stdout (LFIT INPUT syntaxe)
+	- Debug info output to stderr
+	
+	Remarks:
+		- Run with "python generator.py [FILE_PATH] [SEMANTIC] [NB_TRANSITIONS]*
+		- example:
+			- "python generator.py benchmarks/repressilator.lp synchronous > output.txt" generates all synchronous transitions of repressilator into output.txt
+			- "python generator.py benchmarks/mammalian.lp asynchronous > output.txt" generates all asynchronous transitions of mammalian into output.txt
+			- "python generator.py benchmarks/double_inhibition.lp general > output.txt" generates all general transitions of double_inhibition into output.txt
+			- "python generator.py benchmarks/repressilator.lp synchronous 10 > output.txt" generates 10 random synchronous transitions of repressilator into output.txt
+		- Output stdout to text file to get rid of the debug
+		- Fix the number of transition for mamalian in general semantic otherwise too many transitions
+		- Currently BOOLEAN variable ONLY
