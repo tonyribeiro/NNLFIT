@@ -5,8 +5,12 @@
 		- double_inhibition.lp: 2 variables
 		- repressilator.lp: 3 variables
 		- repressilator_AS.lp: 3 variables (special version for change only asynchronous)
+	- Add medium benchmarks
 		- mammalian.lp: 10 variables
-	
+		- fission.lp: 10 variables
+		- budding.lp: 12 variables
+		- arabidopsis.lp: 15 variables
+		
 	- Rule class
 	- Rule extraction from text file (LFIT OUTPUT syntaxe)
 	- All transitions generation
