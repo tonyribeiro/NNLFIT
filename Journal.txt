@@ -28,3 +28,9 @@
 		- Output stdout to text file to get rid of the debug
 		- Fix the number of transition for mamalian in general semantic otherwise too many transitions
 		- Currently BOOLEAN variable ONLY
+		
+24/04/2018
+
+	- Update all transitions generation
+		- Add Multi-value management
+		- Add management of non deterministic synchronous

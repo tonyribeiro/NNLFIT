@@ -10,18 +10,15 @@ def eprint(*args, **kwargs):
 
 #-----------------------
 # Return a vector that gives for each variable the possible values concluded by the matching rules
-def match(variables, state, rules):
+def match(variables, variables_values, state, rules):
 
 	output = []
-
-	for var in variables:
-		output.append([])
 
 	for rule in rules: # Check all rules
 		#eprint("Check matching of ",rule.to_string(),"on",state)
 		if rule.matches(state): # Matching conditions
-			if rule.head_value not in output[rule.head_variable]: # New value
-				output[rule.head_variable].append(rule.head_value)
+			if (rule.head_variable,variables_values[rule.head_variable][rule.head_value]) not in output: # New value
+				output.append((rule.head_variable,variables_values[rule.head_variable][rule.head_value]))
 	
 	return output
 #-----------------------
@@ -120,26 +117,59 @@ def generate_transitions(variables, variables_values, rules, semantic, nb_transi
 # Generate all initial state
 def generate_all_transitions(variables, variables_values, rules, var, state, semantic):
 
-	eprint("Current state: ",state)
+	#eprint("Current state: ",state)
 
 	# State fully initialized
 	if var >= len(variables):
-		matching = match(variables,state,rules)
+		matching = match(variables, variables_values, state, rules)
 		
-		eprint(matching)
+		#eprint(matching)
 		
 		# SYNCHRONOUS semantics: only one next state
 		if semantic == "synchronous":
-			for var in range(0,len(state)):
-				print(variables[var]+"="+str(state[var])+" ", end='')
 		
-			print(": ", end='')
+			# Ensure atleast one value per variable
+			no_value = list(range(0,len(variables)))
+			for i in matching:
+				if i[0] in no_value:
+					no_value.remove(i[0])
+					
+			#print("no value: "+str(no_value))
+			for var_id in no_value:
+				val = random.choice(variables_values[var_id])
+				matching.append((var_id,val))
+			#eprint("Matching: "+str(matching))
+			
+			combinations = subsets(matching)
+			#eprint(combinations)
+			
+			next_states = []
+			
+			for combi in combinations:
+				
+				#print("checking combi: "+str(combi))
+				
+				# Check one value per variables
+				if multiple_val_per_var(combi):
+					continue
+				
+				# Check one value per variable
+				if var_without_val(combi, variables):
+					continue
 		
-			for var in range(0,len(matching)):
-				if len(matching[var]) == 0:
-					eprint("No rule match for variable \""+str(variables[var])+"\" for state",state)
-					sys.exit()
-				print(variables[var]+"="+str(matching[var][0])+" ", end='')
+				next_state = generate_transition(variables, state, combi)
+				
+				# Check duplicate
+				if next_state in next_states:
+					#eprint("duplicate: "+str(next_state))
+					continue
+					
+				next_states.append(next_state)
+					
+				# Print new transition
+				#eprint("new transition !")
+				transition_to_string(state, next_state, variables)
+				print()
 		
 			print()
 		
@@ -148,23 +178,30 @@ def generate_all_transitions(variables, variables_values, rules, var, state, sem
 		# ASYNCHRONOUS semantics: only one variable can update in next state
 		if semantic == "asynchronous":
 		
+			#eprint("Matching: "+str(matching))
+		
+			next_states = []
+		
 			# Generate one transition for each variable...
-			for var in range(0,len(matching)):
-				eprint("Changing variable",variables[var])
-				for val in matching[var]: # ...for each value it can takes
+			for i in matching:
+				var = i[0]
+				val = i[1]
+				#eprint("Change: "+str(var)+"="+str(val))
 				
-					# Print current state
-					for v in range(0,len(state)):
-						print(variables[v]+"="+str(state[v])+" ", end='')
-					print(": ", end='')
+				next_state = list(state)
+				next_state[var] = val
+				
+				# Check duplicate
+				if next_state in next_states:
+					#eprint("duplicate: "+str(next_state))
+					continue
 					
-					next_state = list(state)
-					next_state[var] = val
+				next_states.append(next_state)
 					
-					# Print next state
-					for v in range(0,len(next_state)):
-						print(variables[v]+"="+str(next_state[v])+" ", end='')
-					print()
+				# Print new transition
+				#eprint("new transition !")
+				transition_to_string(state, next_state, variables)
+				print()
 		
 			print()
 		
@@ -174,20 +211,38 @@ def generate_all_transitions(variables, variables_values, rules, var, state, sem
 		if semantic == "general":
 		
 			# explicit matching
-			for var in range(0,len(matching)):
-				matching[var] = [var,matching[var]]
+			#for var in range(0,len(matching)):
+			#	matching[var] = [var,matching[var]]
 		
 			combinations = subsets(matching)
-			eprint(combinations)
+			
+			#eprint(combinations)
+			
+			next_states = []
 			
 			for combi in combinations:
-				# Print current state
-				for v in range(0,len(state)):
-					print(variables[v]+"="+str(state[v])+" ", end='')
-				print(": ", end='')
+			
+				#eprint("combi "+str(combi))
+			
+				# Check one value per variables
+				if multiple_val_per_var(combi):
+					eprint("multiple val")
+					continue
 				
-				generate_transition(variables, state, combi)
+				next_state = generate_transition(variables, state, combi)
+				#eprint("next state: "+str(next_state))
+				# Check duplicate
+				if next_state in next_states:
+					#eprint("duplicate: "+str(next_state))
+					continue
+					
+				next_states.append(next_state)
+				#eprint(next_states)	
+				# Print new transition
+				#eprint("new transition !")
+				transition_to_string(state, next_state, variables)
 				print()
+				
 			
 			print()
 		
@@ -198,7 +253,7 @@ def generate_all_transitions(variables, variables_values, rules, var, state, sem
 		state.append(val)
 	
 		# continue state initialization
-		generate_all_transitions(variables, variables_values, rules, var+1, state,semantic) 
+		generate_all_transitions(variables, variables_values, rules, var+1, state, semantic) 
 		
 		state.pop()
 		
@@ -207,22 +262,18 @@ def generate_all_transitions(variables, variables_values, rules, var, state, sem
 
 def generate_transition(variables, state, combi):
 	
-	eprint("Generating the next state for the combination:",combi)
+	#eprint("Generating the next state for the combination:",combi)
 	
-	if combi == []:
-		return
+	#if combi == []:
+	#	return
 	
 	next_state = list(state)
 	
-	for i in combi: # TODO: MULTI-VALUE
+	for i in combi:
 		var = i[0]
-		next_state[var] = i[1][0] 
+		next_state[var] = i[1]
 		
-	# Print next state
-	for v in range(0,len(next_state)):
-		print(variables[v]+"="+str(next_state[v])+" ", end='')
-	
-	return
+	return next_state
 
 def subsets(s):
     sets = []
@@ -234,3 +285,37 @@ def subsets(s):
 def is_bit_set(num, bit):
     return num & (1 << bit) > 0
 
+def multiple_val_per_var(combi):
+
+	double_value = False
+	
+	for i in range(0,len(combi)):
+		for j in range(i+1,len(combi)):
+			if combi[i][0] == combi[j][0]:
+				double_value = True
+				break
+		if double_value:
+			break
+			
+	return double_value
+	
+def var_without_val(combi, variables):
+
+	no_value = range(0,len(variables))
+	
+	for i in combi:
+		if i[0] in no_value:
+			no_value.remove(i[0])
+	
+	#print("DBG: "+str(no_value))
+	return len(no_value) > 0
+	
+def transition_to_string(state, next_state, variables):
+	# Print current state
+	for v in range(0,len(state)):
+		print(variables[v]+"="+str(state[v])+" ", end='')
+	print(": ", end='')
+	
+	# Print next state
+	for v in range(0,len(next_state)):
+		print(variables[v]+"="+str(next_state[v])+" ", end='')
